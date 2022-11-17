@@ -2,13 +2,20 @@ const express = require("express");
 const router = express.Router();
 const path = require("node:path");
 const { getNewId, writeJSONFile } = require("../helper/helper");
-
 const videosJSONFile = path.join(__dirname, "../data/videos.json");
 const videos = require(videosJSONFile);
+const cors = require("cors");
+
+app.use(cors({ origin: "*" }));
 
 // get all videos from json file
+// http://localhost:8080/api/videos -> GET
 router.get("/", (_req, res) => {
-	res.status(200).json(videos);
+	try {
+		res.status(200).json(videos);
+	} catch (error) {
+		console.log("Error retrieveing the videos", error);
+	}
 });
 
 // get video by Id from json file
@@ -33,17 +40,58 @@ router.post("/", (req, res) => {
 	}
 
 	const newVideo = {
+		id: getNewId(),
 		title,
+		channel: "new user",
+		image: "",
 		description,
-		id: getNewId()
+		views: "0",
+		likes: "0",
+		duration: "",
+		video: "",
+		timestamp: "",
+		comments: "0"
 	};
 
 	//update Json file with new video
 	videos.push(newVideo);
 	writeJSONFile(videosJSONFile, videos);
 
-	//respon to client with new video
+	//responds to client with new video
 	res.status(201).json(newVideo);
+});
+
+//PATCH
+// http://localhost:8080/api/videos/someExistingId
+router.patch("/:id", (req, res) => {
+	// some() returns boolean value
+	const found = videos.some((video) => video.id === req.params.id);
+	if (found) {
+		const updatedVideos = videos.map((video) =>
+			video.id === req.params.id ? { ...video, ...req.body } : video
+		);
+		writeJSONFile(videosJSONFile, updatedVideos);
+
+		res.json({ msg: "Video Updated", Videos: updatedVideos });
+	} else {
+		res.status(404).json({ errorMessage: `Video with ID: ${req.params.id} not found` });
+	}
+});
+
+//DELETE
+// http://localhost:8080/api/videos/idForVideoToBeDeleted
+router.delete("/:id", (req, res) => {
+	const found = videos.some((video) => video.id === req.params.id);
+	if (found) {
+		const videosAfterDeletion = videos.filter((video) => video.id !== req.params.id);
+		writeJSONFile(videosJSONFile, videosAfterDeletion);
+		res.json({
+			msg: `video with ID: ${req.params.id} deleted`,
+			videos: videosAfterDeletion
+		});
+	} else {
+		res.status(404).json({ errorMessage: `video with ID: ${req.params.id} not found` });
+	}
 });
 
 module.exports = router;

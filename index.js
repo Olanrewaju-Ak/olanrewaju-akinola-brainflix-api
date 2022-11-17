@@ -7,10 +7,15 @@ const path = require("node:path");
 const app = express();
 
 const VideoRouter = require("./routes/videos");
-app.use("/api/videos", VideoRouter);
 
 // Add middleware for handling POST request or parsing new information from req.body
 app.use(express.json());
+
+//server to serve images to client using
+app.use(express.static(path.join(__dirname, "public/images")));
+
+//routes for video resources
+app.use("/api/videos", VideoRouter);
 
 app.get("/", (req, res) => {
 	res.sendFile(path.join(__dirname, "public", "index.html"));
