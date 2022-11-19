@@ -4,12 +4,10 @@ const path = require("node:path");
 const { getNewId, writeJSONFile } = require("../helper/helper");
 const videosJSONFile = path.join(__dirname, "../data/videos.json");
 const videos = require(videosJSONFile);
-const cors = require("cors");
-
-app.use(cors({ origin: "*" }));
 
 // get all videos from json file
-// http://localhost:8080/api/videos -> GET
+// http://localhost:8080/videos -> GET
+
 router.get("/", (_req, res) => {
 	try {
 		res.status(200).json(videos);
@@ -21,6 +19,7 @@ router.get("/", (_req, res) => {
 // get video by Id from json file
 router.get("/:id", (req, res) => {
 	const videoById = videos.find((video) => video.id === req.params.id);
+
 	if (videoById) {
 		res.status(200).json(videoById);
 	} else {
@@ -41,16 +40,20 @@ router.post("/", (req, res) => {
 
 	const newVideo = {
 		id: getNewId(),
-		title,
-		channel: "new user",
-		image: "",
-		description,
+		title: title,
+		channel: "BrainStation",
+		image: "http://localhost:8080/images/default.jpg",
+		description: description,
 		views: "0",
 		likes: "0",
 		duration: "",
 		video: "",
-		timestamp: "",
-		comments: "0"
+		timestamp: new Date().toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit"
+		}),
+		comments: []
 	};
 
 	//update Json file with new video
@@ -62,7 +65,7 @@ router.post("/", (req, res) => {
 });
 
 //PATCH
-// http://localhost:8080/api/videos/someExistingId
+// http://localhost:8080/videos/someExistingId
 router.patch("/:id", (req, res) => {
 	// some() returns boolean value
 	const found = videos.some((video) => video.id === req.params.id);
