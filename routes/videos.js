@@ -12,7 +12,7 @@ router.get("/", (_req, res) => {
 	try {
 		res.status(200).json(videos);
 	} catch (error) {
-		console.log("Error retrieveing the videos", error);
+		res.status(400).json("Error retrieveing the videos", error);
 	}
 });
 
@@ -29,7 +29,6 @@ router.get("/:id", (req, res) => {
 
 // Post a video with
 router.post("/", (req, res) => {
-	console.log(req.body);
 	const { title, description } = req.body;
 
 	if (!title || !description) {
@@ -46,14 +45,31 @@ router.post("/", (req, res) => {
 		description: description,
 		views: "0",
 		likes: "0",
-		duration: "",
-		video: "",
-		timestamp: new Date().toLocaleDateString("en-US", {
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit"
-		}),
-		comments: []
+		timestamp: Date.now(),
+		comments: [
+			{
+				id: getNewId(),
+				name: "Travis Scott",
+				comment:
+					"Let’s collaborate on a video for saving money on cheap train tickets! I’ll have my associates contact yours.",
+				likes: 0,
+				timestamp: 1632496261000
+			},
+			{
+				id: getNewId(),
+				name: "Aubrey 'Drake' Graham",
+				comment: "21 can do something for me.",
+				likes: 0,
+				timestamp: 1632496261000
+			},
+			{
+				id: getNewId(),
+				name: "Eminem",
+				comment: "This world is mine for the taking, make me king.",
+				likes: 0,
+				timestamp: 1632496261000
+			}
+		]
 	};
 
 	//update Json file with new video
@@ -64,10 +80,30 @@ router.post("/", (req, res) => {
 	res.status(201).json(newVideo);
 });
 
+// Post Comments
+router.post("/:id/comments", (req, res) => {
+	const { name, comment } = req.body;
+	if (!name && !comment) {
+		return res.status(404).json({ errorMessage: `Video with ID: ${req.params.id} not found` });
+	} else {
+		const newComment = {
+			id: getNewId(),
+			name: name,
+			comment: comment,
+			timestamp: new Date()
+		};
+		const found = videos.find((video) => video.id === req.params.id);
+		if (found) {
+			found.comments.unshift(newComment);
+			writeJSONFile(videosJSONFile, videos);
+			res.status(201).json(found);
+		}
+	}
+});
+
 //PATCH
 // http://localhost:8080/videos/someExistingId
 router.patch("/:id", (req, res) => {
-	// some() returns boolean value
 	const found = videos.some((video) => video.id === req.params.id);
 	if (found) {
 		const updatedVideos = videos.map((video) =>
